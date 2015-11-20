@@ -1,0 +1,4 @@
+Add support for other manufacturers than Force10/Dell.
+Check if passed commands are within "".
+Add possibility to submit parametrized configuration.
+
