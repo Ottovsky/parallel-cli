@@ -12,10 +12,15 @@ optional arguments:
   -u USER, --user USER  User to use in order to log into switches. By default admin.
   -c COMMAND [COMMAND ...], --command COMMAND [COMMAND ...]
                         [REQUIRED] Command to perform on the switches.Commands can be read from the file (preffered)or from command line example: -c "show clock" "show interfaces" "etc ..".
-                        File should contain all the commands that you would type on the switch to obtain desired output.\nExample:\n
-                            conf t\n
-                            int vlan 30\n
-                            no ip addr\n
-                            shutdown\n
-                            end\n
-TAGS: network, ios, cisco, force10, dell, hp, configuration, automated configuration
+                        File should contain all the commands that you would type on the switch to obtain desired output.
+                        Example:
+                        
+                            conf t
+                            
+                            int vlan 30
+                            
+                            no ip addr
+                            
+                            shutdown
+                            
+                            end
