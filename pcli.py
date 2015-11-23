@@ -29,7 +29,7 @@ def switch_connect(hostname, user, password):
             child.sendline(password)
             try:
                 child.expect_exact('Permission denied, please try again.',0.2)
-                logging.error("\n%s@%s: Wrong password."%(user,hostname))
+                logging.error("%s@%s: Wrong password."%(user,hostname))
                 close_connection(child)
                 gracefully_exit()
             except: 
@@ -37,12 +37,12 @@ def switch_connect(hostname, user, password):
             #child.readline()
             enable = child.expect('%s#'%hostname)
             if enable == 0:
-               logging.debug("\n%s@%s: Succesfully logged."%(user,hostname))
+               logging.debug("%s@%s: Succesfully logged."%(user,hostname))
         elif err==1:
-            logging.error("\n%s@%s:Something went wrong (unknown host?) or connection timed out.\n"%(user,hostname))
+            logging.error("%s@%s:Something went wrong (unknown host?) or connection timed out.\n"%(user,hostname))
             pass
     except Exception as e:
-        logging.exception("\n%s@%s: Please check this error:"%(user,hostname))
+        logging.exception("%s@%s: Please check this error:"%(user,hostname))
         exit(0)
     return child
     
@@ -67,7 +67,7 @@ def send_command(connectionid, commands,hostname='',user=''):
                 connectionid.send(linesep)
                 err = connectionid.expect([prompt,more, error])
         if err==2:
-            logging.error("\n%s@%s: Incorrect command. Probably unsupported by switch OS."%(hostname,user))
+            logging.error("%s@%s: Incorrect command. Probably unsupported by switch OS."%(hostname,user))
             continue
         if err==0:
             continue
@@ -124,7 +124,7 @@ def debug_logging(debug_on):
     if debug_on:
         debug_lvl=logging.DEBUG
         
-    FORMAT="%(message)s"
+    FORMAT="\n[%(levelname)5s] %(message)s"
     logging.basicConfig(format=FORMAT, level=debug_lvl)
 
 
@@ -136,7 +136,7 @@ def connection_thread(host,command,user,passwd):
     connection = switch_connect(host, user, passwd)
     send_command(connection,command,user,host)
     close_connection(connection,user,host)
-    gracefully_exit()
+    #gracefully_exit()
 
 if __name__ == '__main__':
     
