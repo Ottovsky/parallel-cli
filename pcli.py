@@ -5,16 +5,19 @@ Created on Nov 9, 2015
 '''
 
 import pexpect, logging
-import argparse
+import argparse, itertools
 import getpass
 import sys, os
+from multiprocessing import Pool
+from multiprocessing.dummy import Pool as ThreadPool
 
 prompt ='#'
 linesep = '\r'
 more="--More--"
 error="% Error: "
 
-def gracefully_exit():    
+def gracefully_exit():
+    logging.debug("Exiting.")    
     os._exit(1)
 
 def switch_connect(hostname, user, password):
@@ -42,7 +45,6 @@ def switch_connect(hostname, user, password):
         logging.exception("\n%s@%s: Please check this error:"%(user,hostname))
         exit(0)
     return child
-        
     
 def command_to_send(command,datalist=None, iteration=1):
      commands =[]
@@ -85,7 +87,6 @@ def is_file(parser, arg):
 def is_nested(list_to_check):
     return any(isinstance(i, list) for i in list_to_check)
     
-
 def unnest(nested_list):
     single_list=[]
     for i in nested_list:   
@@ -125,8 +126,17 @@ def debug_logging(debug_on):
         
     FORMAT="%(message)s"
     logging.basicConfig(format=FORMAT, level=debug_lvl)
-    
-    
+
+
+def connection_star_thread(zipped_data):
+    return connection_thread(*zipped_data)
+
+def connection_thread(host,command,user,passwd):
+    #print host, command, user, passwd
+    connection = switch_connect(host, user, passwd)
+    send_command(connection,command,user,host)
+    close_connection(connection,user,host)
+    gracefully_exit()
 
 if __name__ == '__main__':
     
@@ -135,13 +145,21 @@ if __name__ == '__main__':
     command = command_to_send(command)
     #exit(1)
     debug_logging(debug)
-    logging.debug("User: %s\nSwitches: %s\nCommands: %s\nDebug: %s\n"%(user,switch,command,debug))
+    logging.debug("User: %s\nNetwork devices: %s\nCommands: %s\nDebug: %s\n"%(user,switch,command,debug))
     #exit(1)
     passwd = getpass.getpass('Please provide password for user %s:'%user)
     
-    for host in switch:
-        connection = switch_connect(host, user, passwd)
-        send_command(connection, command,user,host)
-        close_connection(connection,user,host)
+    data_holder= itertools.izip(switch,itertools.repeat(command),itertools.repeat(user),itertools.repeat(passwd))
+    pool = ThreadPool() 
+    
+    #print list(data_holder)
+    pool.map(connection_star_thread,data_holder)
+    pool.close()
+    pool.join()
+
+#    for host in switch:
+#        connection = switch_connect(host, user, passwd)
+#        send_command(connection,command,user,host)
+#        close_connection(connection,user,host)
     
     gracefully_exit()
