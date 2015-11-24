@@ -10,6 +10,8 @@ import getpass
 import sys, os
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
+from symbol import parameters
+import commands
 
 prompt ='#'
 linesep = '\r'
@@ -48,12 +50,20 @@ def switch_connect(hostname, user, password):
     
 def command_to_send(command,datalist=None, iteration=1):
      commands =[]
+     print datalist
      if is_nested(command):
          command = unnest(command)   
      #commands =  linesep.join(i for i in command) + linesep
      for i in command:
          i = i + linesep
          commands.append(i)
+         
+     if datalist != None:
+         for i in commands:
+             nums=i.count('%s')
+             if nums > 0 :
+                 for it in range(nums):
+                     print i
          
      return commands
      
@@ -83,6 +93,15 @@ def is_file(parser, arg):
         with open(arg,'r') as file:
             content = file.readlines()
         return content
+    
+def open_file(parser, arg):
+    try:
+        with open(arg,'r') as paramfile:
+            content = paramfile.readlines()
+    except Exception as e: 
+        logging.exception("Parametrized (-p) file does not exists. Aborting.")
+        gracefully_exit()
+    return content
 
 def is_nested(list_to_check):
     return any(isinstance(i, list) for i in list_to_check)
@@ -97,6 +116,18 @@ def unnest(nested_list):
             single_list.append(i)                       
     return single_list
 
+def parameters_validate(parameters_list, num_of_hosts):
+    parameters = []
+    for i in parameters_list:
+        tmp = i.split(';')
+        parameters.append(tuple(tmp))
+        
+    if len(parameters) != num_of_hosts:
+        logging.error('The number of parameters is not equal to number of hosts. Aborting.')
+        gracefully_exit()
+        
+    return tuple(parameters)
+    
 def get_argument():
     parser = argparse.ArgumentParser(description="Execute command on multiple switches.", formatter_class=argparse.RawTextHelpFormatter,epilog="Current version(0.1) assumes one password for all used devices.")
     parser.add_argument('-u','--user',help='User to use in order to log into switches. By default admin.',default='admin')
@@ -108,15 +139,18 @@ Commands can be read from the file (preffered)or from command line example: -c "
     no ip addr\n\
     shutdown\n\
     end',type= lambda x: is_file(parser,x))
+    parser.add_argument('-p','--parameter',help='If your command is parametrized, please provide a file with parameters.List of parameters for specific host per line.\
+     Order must be the same as the switch one. The file structure must be following:\nparameter1 for host1;parameter2 for host1;etc\nparameter1 for host2;parameter2 for host2;etc',type=lambda x: open_file(parser, x))
     parser.add_argument('switch', nargs='+', help="The switch list or file the list of switches to run command on.",type = lambda x: is_file(parser,x))
     args = parser.parse_args()
     switch = args.switch
     user = args.user
     command = args.command
+    parameters=args.parameter
     debug = args.verbose
     if is_nested(switch):
-        return unnest(switch), user, command, debug         
-    return switch, user, command, debug
+        return unnest(switch), user, command, debug, parameters        
+    return switch, user, command, debug, parameters
 
 def debug_logging(debug_on):
     #FORMAT="%(user)s@%(hostname)s: %(message)s"
@@ -126,7 +160,6 @@ def debug_logging(debug_on):
         
     FORMAT="\n[%(levelname)5s] %(message)s"
     logging.basicConfig(format=FORMAT, level=debug_lvl)
-
 
 def connection_star_thread(zipped_data):
     return connection_thread(*zipped_data)
@@ -140,13 +173,16 @@ def connection_thread(host,command,user,passwd):
 
 if __name__ == '__main__':
     
-    switch, user, command, debug = get_argument()
-    
-    command = command_to_send(command)
-    #exit(1)
+    switch, user, command, debug, parameters = get_argument()
     debug_logging(debug)
-    logging.debug("User: %s\nNetwork devices: %s\nCommands: %s\nDebug: %s\n"%(user,switch,command,debug))
+    if parameters != None:
+        parameters=parameters_validate(parameters, len(switch))
+    #print parameters
+    command = command_to_send(command,parameters,len(switch))
     #exit(1)
+    
+    logging.debug("User: %s\nNetwork devices: %s\nCommands: %s\nDebug: %s\n"%(user,switch,command,debug))
+    exit(1)
     passwd = getpass.getpass('Please provide password for user %s:'%user)
     
     data_holder= itertools.izip(switch,itertools.repeat(command),itertools.repeat(user),itertools.repeat(passwd))
