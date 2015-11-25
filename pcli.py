@@ -51,30 +51,32 @@ def switch_connect(hostname, user, password):
 def command_to_send(command,datalist=None, iteration=1):
      commands =[]
      commands_per_switch = []
-     print datalist
      if is_nested(command):
          command = unnest(command)   
      #commands =  linesep.join(i for i in command) + linesep
      pos=0
-     if datalist != None:
-         for ptr in range(iteration):
-             for i in command:
-                 nums=i.count('%s')
-                 print i,nums, pos, datalist[ptr][pos:pos+nums]
-                 if nums > 0 :
-                    commands.append(i%datalist[ptr][pos:pos+nums]+linesep)
-                 else:
-                    commands.append(i+linesep)
-                 pos=pos+nums
-             pos=0
-             commands_per_switch.append(commands)
+     #if datalist != None:
+     for ptr in range(iteration):
+         for i in command:
+             nums=i.count('%s')
+             if nums > 0 :
+                commands.append(i%datalist[ptr][pos:pos+nums]+linesep)
+             else:
+                commands.append(i+linesep)
+             pos=pos+nums
+         pos=0
+         commands_per_switch.append(commands)
+         commands = []
+     '''
      else:
          for ptr in range(iteration):  
              for i in command:
+                 print i
                  i = i + linesep
                  commands.append(i)
              commands_per_switch.append(commands)
-             
+             commands = []
+     '''
      return commands_per_switch
 
 def close_connection(connectionid,user='',hostname=''):
@@ -91,7 +93,7 @@ def send_command(connectionid, commands,hostname='',user=''):
                 connectionid.send(linesep)
                 err = connectionid.expect([prompt,more, error])
         if err==2:
-            logging.error("%s@%s: Incorrect command: %s. Probably unsupported by switch OS. Closing connection before you do something stupid."%(hostname,user,command))
+            logging.error("%s@%s: Incorrect command: \"%s\".\nProbably unsupported by switch OS. Closing connection before you do something stupid."%(hostname,user,command.replace('\r','')))
             close_connection(connectionid,user,hostname)
             gracefully_exit()
             continue
@@ -154,7 +156,7 @@ Commands can be read from the file (preffered)or from command line example: -c "
     no ip addr\n\
     shutdown\n\
     end',type= lambda x: is_file(parser,x))
-    parser.add_argument('-p','--parameter',help='If your command is parametrized, please provide a file with parameters.List of parameters for specific host per line.\
+    parser.add_argument('-p','--parameter',help='If your command is parametrized, please provide a file with parameters.List of parameters (parameter per column) for specific host per row.\
      Order must be the same as the switch one. The file structure must be following:\nparameter1 for host1;parameter2 for host1;etc\nparameter1 for host2;parameter2 for host2;etc',type=lambda x: open_file(parser, x))
     parser.add_argument('switch', nargs='+', help="The switch list or file the list of switches to run command on.",type = lambda x: is_file(parser,x))
     args = parser.parse_args()
@@ -192,17 +194,12 @@ if __name__ == '__main__':
     debug_logging(debug)
     if parameters != None:
         parameters=parameters_validate(parameters, len(switch))
-    #print parameters
+    
     command = command_to_send(command,parameters,len(switch))
-    #exit(1)
-    print command
     logging.debug("User: %s\nNetwork devices: %s\nCommands: %s\nDebug: %s\n"%(user,switch,command,debug))
-    #exit(1)
-    passwd = 'dupa'#getpass.getpass('Please provide password for user %s:'%user)
+    passwd = getpass.getpass('Please provide password for user %s:'%user)
     
     data_holder= itertools.izip(switch,command,itertools.repeat(user),itertools.repeat(passwd))
-    print list(data_holder)
-    exit(1)
     pool = ThreadPool() 
     
     #print list(data_holder)
