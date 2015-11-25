@@ -50,23 +50,37 @@ def switch_connect(hostname, user, password):
     
 def command_to_send(command,datalist=None, iteration=1):
      commands =[]
+     commands_per_switch = []
      print datalist
      if is_nested(command):
          command = unnest(command)   
      #commands =  linesep.join(i for i in command) + linesep
-     for i in command:
-         i = i + linesep
-         commands.append(i)
-         
+     pos=0
      if datalist != None:
-         for i in commands:
-             nums=i.count('%s')
-             if nums > 0 :
-                 for it in range(nums):
-                     print i
-         
-     return commands
-     
+         for ptr in range(iteration):
+             for i in command:
+                 nums=i.count('%s')
+                 print i,nums, pos, datalist[ptr][pos:pos+nums]
+                 if nums > 0 :
+                    commands.append(i%datalist[ptr][pos:pos+nums]+linesep)
+                 else:
+                    commands.append(i+linesep)
+                 pos=pos+nums
+             pos=0
+             commands_per_switch.append(commands)
+     else:
+         for ptr in range(iteration):  
+             for i in command:
+                 i = i + linesep
+                 commands.append(i)
+             commands_per_switch.append(commands)
+             
+     return commands_per_switch
+
+def close_connection(connectionid,user='',hostname=''):
+        logging.debug("%s@%s: Closing connection."%(user,hostname))
+        connectionid.close()
+    
 def send_command(connectionid, commands,hostname='',user=''):
     for command in commands:
         connectionid.sendline(command)
@@ -77,14 +91,12 @@ def send_command(connectionid, commands,hostname='',user=''):
                 connectionid.send(linesep)
                 err = connectionid.expect([prompt,more, error])
         if err==2:
-            logging.error("%s@%s: Incorrect command. Probably unsupported by switch OS."%(hostname,user))
+            logging.error("%s@%s: Incorrect command: %s. Probably unsupported by switch OS. Closing connection before you do something stupid."%(hostname,user,command))
+            close_connection(connectionid,user,hostname)
+            gracefully_exit()
             continue
         if err==0:
             continue
-
-def close_connection(connectionid,user='',hostname=''):
-        logging.debug("%s@%s: Closing connection."%(user,hostname))
-        connectionid.close()
         
 def is_file(parser, arg):
     if not os.path.isfile(arg):
@@ -95,13 +107,16 @@ def is_file(parser, arg):
         return content
     
 def open_file(parser, arg):
+    file_content=[]
     try:
         with open(arg,'r') as paramfile:
             content = paramfile.readlines()
     except Exception as e: 
         logging.exception("Parametrized (-p) file does not exists. Aborting.")
         gracefully_exit()
-    return content
+    for i in content:
+        file_content.append(i.replace("\n",''))
+    return file_content
 
 def is_nested(list_to_check):
     return any(isinstance(i, list) for i in list_to_check)
@@ -180,12 +195,14 @@ if __name__ == '__main__':
     #print parameters
     command = command_to_send(command,parameters,len(switch))
     #exit(1)
-    
+    print command
     logging.debug("User: %s\nNetwork devices: %s\nCommands: %s\nDebug: %s\n"%(user,switch,command,debug))
-    exit(1)
-    passwd = getpass.getpass('Please provide password for user %s:'%user)
+    #exit(1)
+    passwd = 'dupa'#getpass.getpass('Please provide password for user %s:'%user)
     
-    data_holder= itertools.izip(switch,itertools.repeat(command),itertools.repeat(user),itertools.repeat(passwd))
+    data_holder= itertools.izip(switch,command,itertools.repeat(user),itertools.repeat(passwd))
+    print list(data_holder)
+    exit(1)
     pool = ThreadPool() 
     
     #print list(data_holder)
