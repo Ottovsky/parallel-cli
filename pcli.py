@@ -7,9 +7,10 @@ Created on Nov 9, 2015
 import pexpect, logging
 import argparse, itertools
 import getpass
-import sys, os
+import sys, os, signal
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
+import multiprocessing
 
 
 prompt ='#'
@@ -195,6 +196,8 @@ def connection_thread(host,command,user,passwd,logger):
     close_connection(connection,user,host)
     #gracefully_exit()
 
+    
+    
 if __name__ == '__main__':
     
     switch, user, command, debug, parameters, logger = get_argument()
@@ -210,13 +213,13 @@ if __name__ == '__main__':
     pool = ThreadPool() 
     
     #print list(data_holder)
-    pool.map(connection_star_thread,data_holder)
-    pool.close()
-    pool.join()
-
-#    for host in switch:
-#        connection = switch_connect(host, user, passwd)
-#        send_command(connection,command,user,host)
-#        close_connection(connection,user,host)
-    
-    gracefully_exit()
+    try:
+        pool.map(connection_star_thread,data_holder)
+        pool.close()
+        pool.join()
+        gracefully_exit()
+    except KeyboardInterrupt:
+        logging.error("Caught keyboard interrupt. Killing all threads.")
+        pool.terminate()
+        pool.join()
+        gracefully_exit()
