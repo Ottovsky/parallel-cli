@@ -1,5 +1,0 @@
-conf t
-interface vlan 122
-description "test test test"
-shutdown
-end
