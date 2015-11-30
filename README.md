@@ -78,7 +78,7 @@ Parameters file structure:
 
 ```
 [DEBUG] User: admin
-Network devices: ['sw-d1a10-d1', 'sw-d1a09-d1']
+Network devices: ['switch1', 'switch2']
 Commands: [['show clock\r'], ['show clock\r']]
 Debug: True
 Logging: False
