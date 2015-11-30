@@ -42,7 +42,6 @@ def switch_connect(hostname, user, password, logger):
                 gracefully_exit()
             except: 
                 pass
-            #child.readline()
             enable = child.expect('%s#'%hostname)
             if enable == 0:
                logging.debug("%s@%s: Succesfully logged."%(user,hostname))
@@ -59,9 +58,7 @@ def command_to_send(command,datalist=None, iteration=1):
      commands_per_switch = []
      if is_nested(command):
          command = unnest(command)   
-     #commands =  linesep.join(i for i in command) + linesep
      pos=0
-     #if datalist != None:
      for ptr in range(iteration):
          for i in command:
              nums=i.count('%s')
@@ -73,16 +70,6 @@ def command_to_send(command,datalist=None, iteration=1):
          pos=0
          commands_per_switch.append(commands)
          commands = []
-     '''
-     else:
-         for ptr in range(iteration):  
-             for i in command:
-                 print i
-                 i = i + linesep
-                 commands.append(i)
-             commands_per_switch.append(commands)
-             commands = []
-     '''
      return commands_per_switch
 
 def close_connection(connectionid,user='',hostname=''):
@@ -178,7 +165,6 @@ Commands can be read from the file (preffered)or from command line example: -c "
     return switch, user, command, debug, parameters, logger
 
 def debug_logging(debug_on):
-    #FORMAT="%(user)s@%(hostname)s: %(message)s"
     debug_lvl=logging.ERROR
     if debug_on:
         debug_lvl=logging.DEBUG
@@ -190,11 +176,9 @@ def connection_star_thread(zipped_data):
     return connection_thread(*zipped_data)
 
 def connection_thread(host,command,user,passwd,logger):
-    #print host, command, user, passwd
     connection = switch_connect(host, user, passwd,logger)
     send_command(connection,command,user,host)
     close_connection(connection,user,host)
-    #gracefully_exit()
 
     
     
@@ -212,12 +196,12 @@ if __name__ == '__main__':
     data_holder= itertools.izip(switch,command,itertools.repeat(user),itertools.repeat(passwd),itertools.repeat(logger))
     pool = ThreadPool() 
     
-    #print list(data_holder)
     try:
         pool.map(connection_star_thread,data_holder)
         pool.close()
         pool.join()
         gracefully_exit()
+        
     except KeyboardInterrupt:
         logging.error("Caught keyboard interrupt. Killing all threads.")
         pool.terminate()
