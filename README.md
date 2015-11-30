@@ -59,6 +59,8 @@ end
 
 The structure of the parameters file. In the current version, this file must have a csv like structure, each entry in the row is separated by **;**. So the table look as follows:
 
+|Parameter 1|   Parameter 2    | Parameter 3  |
+| ---- |:-------------:| -----:|
 |210   |"entry for the switch1"   |10.10.10.10 |
 |220   |"entry for the switch2"   |12.1.2.1    |
 |212   |"entry for the switch3"   |2.3.4.5     |
