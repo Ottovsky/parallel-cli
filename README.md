@@ -73,5 +73,70 @@ Parameters file structure:
 220;"entry for the switch2";12.1.2.1
 212;"entry for the switch3";2.3.4.5
 ```
+###Example output:
+** python pcli.py switch1 switch2 -c "show clock"  -v **
 
+```
+[DEBUG] User: admin
+Network devices: ['sw-d1a10-d1', 'sw-d1a09-d1']
+Commands: [['show clock\r'], ['show clock\r']]
+Debug: True
+Logging: False
+
+Please provide password for user admin:
+
+[DEBUG] admin@switch1: Connecting to the host.
+
+[DEBUG] admin@switch2: Connecting to the host.
+Warning: Permanently added 'switch1,8.8.8.8' (RSA) to the list of known hosts.
+Warning: Permanently added 'switch2,9.9.9.9' (RSA) to the list of known hosts.
+admin@switch1's password: admin@switch2's password: 
+
+switch1#switch2#
+[DEBUG] admin@switch1: Succesfully logged.
+
+[DEBUG] admin@switch2: Succesfully logged.
+show clock
+15:59:39.373 CET Mon Nov 30 2015
+show clock
+15:59:39.396 CET Mon Nov 30 2015
+switch2#
+[DEBUG] admin@switch2: Closing connection.
+switch1#
+[DEBUG] admin@switch1: Closing connection.
+
+[DEBUG] Exiting.
+```
+##Help
+
+```
+usage: pcli.py [-h] [-u USER] [-v] [-l] -c COMMAND [COMMAND ...]
+               [-p PARAMETER]
+               switch [switch ...]
+
+Execute command on multiple switches.
+
+positional arguments:
+  switch                The switch list or file the list of switches to run command on.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -u USER, --user USER  User to use in order to log into switches. By default admin.
+  -v, --verbose         Turn on verbose.
+  -l, --logging         Log connection output to the file, otherwise to stdout.
+  -c COMMAND [COMMAND ...], --command COMMAND [COMMAND ...]
+                        [REQUIRED] Command to perform on the switches.Commands can be read from the file (preffered)or from command line example: -c "show clock" "show interfaces" "etc ..".
+                        File should contain all the commands that you would type on the switch to obtain desired output. Example:
+                            conf t
+                            int vlan 30
+                            no ip addr
+                            shutdown
+                            end
+  -p PARAMETER, --parameter PARAMETER
+                        If your command is parametrized, please provide a file with parameters.List of parameters (parameter per column) for specific host per row.     Order must be the same as the switch one. :
+                        parameter1 for host1;parameter2 for host1;etc
+                        parameter1 for host2;parameter2 for host2;etc
+
+Current version(0.1) assumes one password for all used devices.
+```
 
