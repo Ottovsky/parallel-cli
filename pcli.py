@@ -10,8 +10,7 @@ import getpass
 import sys, os
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
-from symbol import parameters
-import commands
+
 
 prompt ='#'
 linesep = '\r'
