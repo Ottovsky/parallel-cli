@@ -57,7 +57,7 @@ no shutdown
 end
 ```
 
-The structure of the parameters file. In the current version, this file must have a csv like structure, each entry in the row is separated by **;**. So the table look as follows:
+The structure of the parameters file. In the current version, this file must have a csv like structure, each entry in the row is separated by **";"**. So the table look as follows:
 
 |Parameter 1|   Parameter 2    | Parameter 3  |
 | ---- |:-------------:| -----:|
@@ -65,7 +65,7 @@ The structure of the parameters file. In the current version, this file must hav
 |220   |"entry for the switch2"   |12.1.2.1    |
 |212   |"entry for the switch3"   |2.3.4.5     |
 
-As you can see the order of the parameters is exactly the same as there appear in the command file. Each row stands for parameters for one switch, they also must be in the same order as they are in the switch list, otherwise, you can execute commands on other switch than you expected.
+As you can see the order of the parameters is exactly the same as they appear in the command file. Each row stands for parameters for one switch, they also must be in the same order as they are in the switch list, otherwise, you can execute commands on other switch than expected.
 
 Parameters file structure:
 ```

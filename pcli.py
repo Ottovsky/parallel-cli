@@ -154,7 +154,7 @@ def get_argument():
     parser = argparse.ArgumentParser(description="Execute command on multiple switches.", formatter_class=argparse.RawTextHelpFormatter,epilog="Current version(0.1) assumes one password for all used devices.")
     parser.add_argument('-u','--user',help='User to use in order to log into switches. By default admin.',default='admin')
     parser.add_argument('-v','--verbose',help='Turn on verbose.',action='store_true')
-    parser.add_argument('-l','--logging',help='Log connection output to the file, otherwise to stdout.',action='store_true')
+    parser.add_argument('-l','--logging',help='Log connection output to the file (hostname.log), otherwise to stdout.',action='store_true')
     parser.add_argument('-c','--command',nargs='+',required=True,help='[REQUIRED] Command to perform on the switches.\
 Commands can be read from the file (preffered)or from command line example: -c "show clock" "show interfaces" "etc ..".\nFile should contain all the commands that you would type on the switch to obtain desired output. Example:\n\
     conf t\n\
