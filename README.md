@@ -61,17 +61,17 @@ The structure of the parameters file. In the current version, this file must hav
 
 |Parameter 1|   Parameter 2    | Parameter 3  |
 | ---- |:-------------:| -----:|
-|210   |"entry for the switch1"   |10.10.10.10 |
-|220   |"entry for the switch2"   |12.1.2.1    |
-|212   |"entry for the switch3"   |2.3.4.5     |
+|210   |"description for the switch1"   |10.10.10.10 |
+|220   |"description for the switch2"   |12.1.2.1    |
+|212   |"description for the switch3"   |2.3.4.5     |
 
 As you can see the order of the parameters is exactly the same as they appear in the command file. Each row stands for parameters for one switch, they also must be in the same order as they are in the switch list, otherwise, you can execute commands on other switch than expected.
 
 Parameters file structure:
 ```
-210;"entry for the switch1";10.10.10.10
-220;"entry for the switch2";12.1.2.1
-212;"entry for the switch3";2.3.4.5
+210;"description for the switch1";10.10.10.10
+220;"description for the switch2";12.1.2.1
+212;"description for the switch3";2.3.4.5
 ```
 ###Example output:
 ** python pcli.py switch1 switch2 -c "show clock"  -v **
