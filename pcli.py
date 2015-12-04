@@ -1,7 +1,10 @@
 '''
 Created on Nov 9, 2015
 
-@author: aotto
+For now this version supports HP and Force10 and probably other network devices with similar CLI.
+
+
+@author: aotto@cern.ch
 '''
 
 import pexpect, logging
@@ -17,6 +20,7 @@ prompt ='#'
 linesep = '\r'
 more="--More--"
 error="% Error: "
+any_key="any key to continue" # HP requires to hit enter after typying password
 
 def gracefully_exit():
     logging.debug("Exiting.")    
@@ -32,7 +36,7 @@ def switch_connect(hostname, user, password, logger):
         else: 
             child.logfile_read=sys.stdout
             
-        err  = child.expect('assword:')
+        err  = child.expect(['assword:',any_key, pexpect.EOF, pexpect.TIMEOUT])
         if err==0:
             child.sendline(password)
             try:
@@ -42,15 +46,32 @@ def switch_connect(hostname, user, password, logger):
                 gracefully_exit()
             except: 
                 pass
-            enable = child.expect('%s#'%hostname)
+            
+            enable = child.expect([prompt,any_key])
+            
             if enable == 0:
                logging.debug("%s@%s: Succesfully logged."%(user,hostname))
-        elif err==1:
+               
+            elif enable == 1: #for HPs which require to press enter after succesfully typying password.
+                child.send(linesep)
+                after_enter = child.expect(prompt)
+                if after_enter==0:
+                    logging.debug("%s@%s: Succesfully logged."%(user,hostname))
+               
+        elif(err==1): # if password is not set on HP, it requires to press any key
+            child.send(linesep)
+            enable = child.expect(prompt)
+            if enable == 0:
+               logging.debug("%s@%s: Succesfully logged."%(user,hostname))
+               
+        elif (err==2 or err==3):
             logging.error("%s@%s:Something went wrong (unknown host?) or connection timed out.\n"%(user,hostname))
-            pass
+            gracefully_exit()
+        
     except Exception as e:
         logging.exception("%s@%s: Please check this error:"%(user,hostname))
-        exit(0)
+        gracefully_exit()
+        
     return child
     
 def command_to_send(command,datalist=None, iteration=1):
