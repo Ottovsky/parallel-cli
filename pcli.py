@@ -13,9 +13,9 @@ import getpass
 import sys, os, signal
 from multiprocessing import Pool
 from multiprocessing.dummy import Pool as ThreadPool
-import multiprocessing
 
 
+#this should be declared in a class for specific device producer
 prompt ='#'
 linesep = '\r'
 more="--More--"
@@ -36,7 +36,7 @@ def switch_connect(hostname, user, password, logger):
         else: 
             child.logfile_read=sys.stdout
             
-        err  = child.expect(['assword:',any_key, pexpect.EOF, pexpect.TIMEOUT])
+        err  = child.expect(['assword:',any_key, prompt, pexpect.EOF, pexpect.TIMEOUT])
         if err==0:
             child.sendline(password)
             try:
@@ -62,9 +62,12 @@ def switch_connect(hostname, user, password, logger):
             child.send(linesep)
             enable = child.expect(prompt)
             if enable == 0:
-               logging.debug("%s@%s: Succesfully logged."%(user,hostname))
+               logging.debug("%s@%s: Succesfully logged. The password was not set on the device."%(user,hostname))
                
-        elif (err==2 or err==3):
+        elif(err==2):
+            logging.debug("%s@%s: Succesfully logged using ssh key."%(user,hostname))  
+               
+        elif (err==3 or err==4):
             logging.error("%s@%s:Something went wrong (unknown host?) or connection timed out.\n"%(user,hostname))
             gracefully_exit()
         
@@ -163,6 +166,7 @@ def get_argument():
     parser = argparse.ArgumentParser(description="Execute command on multiple switches.", formatter_class=argparse.RawTextHelpFormatter,epilog="Current version(0.1) assumes one password for all used devices.")
     parser.add_argument('-u','--user',help='User to use in order to log into switches. By default admin.',default='admin')
     parser.add_argument('-v','--verbose',help='Turn on verbose.',action='store_true')
+    parser.add_argument('-k','--key_based',help='If you are using ssh key-based login use this option to not specify password.',action='store_true')
     parser.add_argument('-l','--logging',help='Log connection output to the file (hostname.log), otherwise to stdout.',action='store_true')
     parser.add_argument('-c','--command',nargs='+',required=True,help='[REQUIRED] Command to perform on the switches.\
 Commands can be read from the file (preffered)or from command line example: -c "show clock" "show interfaces" "etc ..".\nFile should contain all the commands that you would type on the switch to obtain desired output. Example:\n\
@@ -181,9 +185,10 @@ Commands can be read from the file (preffered)or from command line example: -c "
     parameters=args.parameter
     debug = args.verbose
     logger = args.logging
+    key_based = args.key_based
     if is_nested(switch):
-        return unnest(switch), user, command, debug, parameters, logger     
-    return switch, user, command, debug, parameters, logger
+        return unnest(switch), user, command, debug, parameters, logger , key_based    
+    return switch, user, command, debug, parameters, logger, key_based
 
 def debug_logging(debug_on):
     debug_lvl=logging.ERROR
@@ -205,14 +210,19 @@ def connection_thread(host,command,user,passwd,logger):
     
 if __name__ == '__main__':
     
-    switch, user, command, debug, parameters, logger = get_argument()
+    switch, user, command, debug, parameters, logger , key_based = get_argument()
     debug_logging(debug)
+    
     if parameters != None:
         parameters=parameters_validate(parameters, len(switch))
     
     command = command_to_send(command,parameters,len(switch))
     logging.debug("User: %s\nNetwork devices: %s\nCommands: %s\nDebug: %s\nLogging: %s\n"%(user,switch,command,debug,logger))
-    passwd = getpass.getpass('Please provide password for user %s:'%user)
+    
+    if key_based:
+        passwd=''
+    else:
+        passwd = getpass.getpass('Please provide password for user %s:'%user)
     
     data_holder= itertools.izip(switch,command,itertools.repeat(user),itertools.repeat(passwd),itertools.repeat(logger))
     pool = ThreadPool() 
